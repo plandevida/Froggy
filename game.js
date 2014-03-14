@@ -44,7 +44,10 @@ var playGame = function() {
 
   var juego = new GameBoard();
   juego.add(new Frog());
-  juego.add(new Coche());
+  juego.add(new CocheAmarillo());
+  juego.add(new CocheRosa());
+  juego.add(new CocheBlanco());
+  juego.add(new Tractor());
   Game.setBoard(1, juego);
 };
 
@@ -117,20 +120,50 @@ Frog.prototype = new Sprite();
 //};
 
 var Coche = function() {
+  this.x = 0;
+  this.y = 0;
+};
+Coche.prototype = new Sprite();
+Coche.prototype.step = function(dt) {
+    this.x += this.vx * dt;
+
+    if (this.x + this.w < 0 || this.x + this.w > Game.width) {
+      this.board.remove(this);
+      console.log("entidad eliminada " + this.prototype);
+    }
+};
+
+var CocheAmarillo = function() {
   this.setup('car1', { vx: -50 });
 
   this.x = Game.width + this.w;
   this.y = 380;
-
-  this.step = function(dt) {
-    this.x += this.vx * dt;
-
-    if (this.x + this.w < 0 ) {
-      this.board.remove(this);
-    }
-  };
 };
-Coche.prototype = new Sprite();
+CocheAmarillo.prototype = new Coche();
+
+var CocheRosa = function() {
+  this.setup('car4', { vx: -80 });
+
+  this.x = Game.width + this.w;
+  this.y = 328;
+};
+CocheRosa.prototype = new Coche();
+
+var CocheBlanco = function() {
+  this.setup('car5', { vx: 60 });
+
+  this.x = -this.w;
+  this.y = 276;
+};
+CocheBlanco.prototype = new Coche();
+
+var Tractor = function() {
+  this.setup('car2', { vx: 30 });
+
+  this.x = -this.w;
+  this.y = 328;
+};
+Tractor.prototype = new Coche();
 
 var Enemy = function(blueprint,override) {
   this.merge(this.baseParameters);
