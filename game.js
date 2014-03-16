@@ -2,7 +2,7 @@ var sprites = {
   frog: { sx: 0, sy: 0, w: 48, h: 48, frames: 1 },
   bg: { sx: 433, sy: 0, w: 320, h: 480, frames: 1 },
   car1: { sx: 143, sy: 0, w: 48, h: 48, frames: 1 },
-  car2: { sx: 191, sy: 0, w: 48, h: 48, frames: 1 },  
+  car2: { sx: 192, sy: 0, w: 48, h: 48, frames: 1 },  
   car3: { sx: 239, sy: 0, w: 96, h: 48, frames: 1 },
   car4: { sx: 335, sy: 0, w: 48, h: 48, frames: 1 },
   car5: { sx: 383, sy: 0, w: 48, h: 48, frames: 1 },
@@ -127,16 +127,37 @@ Coche.prototype = new Sprite();
 Coche.prototype.step = function(dt) {
     this.x += this.vx * dt;
 
-    if (this.x + this.w < 0 || this.x + this.w > Game.width) {
+    var collision = this.board.collide(this,OBJECT_PLAYER);
+    if(collision) {
+      collision.hit(this.damage);
       this.board.remove(this);
-      console.log("entidad eliminada " + this.prototype);
     }
+
+    var posicionEntidad = this.x + this.w;
+    var posicionEliminacion = Game.width + (this.w * 1.5);
+
+    if ( (posicionEntidad < 0) || (posicionEntidad > posicionEliminacion)) {
+      console.log(this.x);
+      console.log(this.x + this.w + " > " + posicionEliminacion);
+      this.board.remove(this);
+      console.log("entidad eliminada ");
+    }
+};
+Coche.prototype.hit = function(damage) {
+  this.health -= damage;
+  if(this.health <=0) {
+    if(this.board.remove(this)) {
+      Game.points += this.points || 100;
+      this.board.add(new Explosion(this.x + this.w/2, 
+                                   this.y + this.h/2));
+    }
+  }
 };
 
 var CocheAmarillo = function() {
   this.setup('car1', { vx: -50 });
 
-  this.x = Game.width + this.w;
+  this.x = Game.width;
   this.y = 380;
 };
 CocheAmarillo.prototype = new Coche();
@@ -144,8 +165,8 @@ CocheAmarillo.prototype = new Coche();
 var CocheRosa = function() {
   this.setup('car4', { vx: -80 });
 
-  this.x = Game.width + this.w;
-  this.y = 328;
+  this.x = Game.width;
+  this.y = 330;
 };
 CocheRosa.prototype = new Coche();
 
@@ -153,7 +174,7 @@ var CocheBlanco = function() {
   this.setup('car5', { vx: 60 });
 
   this.x = -this.w;
-  this.y = 276;
+  this.y = 282;
 };
 CocheBlanco.prototype = new Coche();
 
@@ -161,9 +182,17 @@ var Tractor = function() {
   this.setup('car2', { vx: 30 });
 
   this.x = -this.w;
-  this.y = 328;
+  this.y = 235;
 };
 Tractor.prototype = new Coche();
+
+var Camion = function() {
+  this.setup('car3', { vx: 40 });
+
+  this.x = Game.width + this.w;
+  this.y = 380;
+};
+Camion.prototype = new Coche();
 
 var Enemy = function(blueprint,override) {
   this.merge(this.baseParameters);
