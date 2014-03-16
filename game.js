@@ -112,12 +112,12 @@ var Frog = function() {
   };
 };
 Frog.prototype = new Sprite();
-//Frog.prototype.type = OBJECT_PLAYER;
-//Frog.prototype.hit = function(damage) {
-//  if(this.board.remove(this)) {
-//    loseGame();
-//  }
-//};
+Frog.prototype.type = OBJECT_PLAYER;
+Frog.prototype.hit = function(damage) {
+  if(this.board.remove(this)) {
+    loseGame();
+  }
+};
 
 var Coche = function() {
   this.x = 0;
