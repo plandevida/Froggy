@@ -32,12 +32,15 @@ var OBJECT_PLAYER = 1,
 
 var startGame = function() {
 
-  //Game.setBoard(3,new TitleScreen("Frogger", "Press spacebar to start playing", playGame));
+  Game.setBoard(3,new TitleScreen("Frogger", "Press spacebar to start playing", playGame));
 
-  playGame();
+  //playGame();
 };
 
 var playGame = function() {
+
+  Game.setBoard(3, undefined);
+
   var board = new GameBoard();
   board.add(new Background());
   Game.setBoard(0, board);
@@ -48,6 +51,8 @@ var playGame = function() {
   juego.add(new CocheRosa());
   juego.add(new CocheBlanco());
   juego.add(new Tractor());
+  juego.add(new Camion());
+  juego.add(new Trunk());
   Game.setBoard(1, juego);
 };
 
@@ -82,9 +87,10 @@ var Frog = function() {
   this.y = Game.height - this.h;
 
   this.step = function(dt) {
+
     this.reload -= dt;
 
-  if( this.reload <= 0) {
+    if( this.reload <= 0) {
       if (Game.keys['left']) {
         this.x -= this.w;
       }
@@ -105,7 +111,7 @@ var Frog = function() {
     else if(this.x > Game.width - this.w) { 
       this.x = Game.width - this.w;
     }
-    if(this.y < 0) { this.y = 0; }
+    if(this.y < 0) { this.y = 0; winGame(); }
     else if(this.y > Game.height - this.h) { 
       this.y = Game.height - this.h;
     }
@@ -137,8 +143,6 @@ Coche.prototype.step = function(dt) {
     var posicionEliminacion = Game.width + (this.w * 1.5);
 
     if ( (posicionEntidad < 0) || (posicionEntidad > posicionEliminacion)) {
-      console.log(this.x);
-      console.log(this.x + this.w + " > " + posicionEliminacion);
       this.board.remove(this);
       console.log("entidad eliminada ");
     }
@@ -158,7 +162,8 @@ var CocheAmarillo = function() {
   this.setup('car1', { vx: -50 });
 
   this.x = Game.width;
-  this.y = 380;
+  this.y = 384;
+
 };
 CocheAmarillo.prototype = new Coche();
 
@@ -166,7 +171,8 @@ var CocheRosa = function() {
   this.setup('car4', { vx: -80 });
 
   this.x = Game.width;
-  this.y = 330;
+  this.y = 336;
+
 };
 CocheRosa.prototype = new Coche();
 
@@ -174,7 +180,8 @@ var CocheBlanco = function() {
   this.setup('car5', { vx: 60 });
 
   this.x = -this.w;
-  this.y = 282;
+  this.y = 288;
+
 };
 CocheBlanco.prototype = new Coche();
 
@@ -182,17 +189,44 @@ var Tractor = function() {
   this.setup('car2', { vx: 30 });
 
   this.x = -this.w;
-  this.y = 235;
+  this.y = 240;
+
 };
 Tractor.prototype = new Coche();
 
 var Camion = function() {
-  this.setup('car3', { vx: 40 });
+  this.setup('car3', { vx: -40 });
 
-  this.x = Game.width + this.w;
-  this.y = 380;
+  this.x = Game.width;
+  this.y = 336;
+
 };
 Camion.prototype = new Coche();
+
+var Trunk = function() {
+  this.setup( 'trunk', { vx: -70 });
+
+  this.x = Game.width;
+  this.y = 48;
+
+  this.step = function(dt) {
+    this.x += this.vx * dt;
+
+    var collision = this.board.collide(this,OBJECT_PLAYER);
+    if(collision) {
+      collision.x = this.x;
+    }
+
+    var posicionEntidad = this.x + this.w;
+    var posicionEliminacion = Game.width + (this.w * 1.5);
+
+    /*if ( (posicionEntidad < 0) || (posicionEntidad > posicionEliminacion)) {
+      this.board.remove(this);
+      console.log("entidad eliminada ");
+    }*/
+  };
+};
+Trunk.prototype = new Sprite();
 
 var Enemy = function(blueprint,override) {
   this.merge(this.baseParameters);

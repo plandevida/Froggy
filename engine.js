@@ -249,7 +249,7 @@ var GameBoard = function() {
   };
 
   // Draw all the objects
-  this.draw= function(ctx) {
+  this.draw = function(ctx) {
     this.iterate('draw',ctx);
   };
 
