@@ -25,10 +25,9 @@ var enemies = {
 */
 
 var OBJECT_PLAYER = 1,
-    OBJECT_PLAYER_PROJECTILE = 2,
-    OBJECT_ENEMY = 4,
-    OBJECT_ENEMY_PROJECTILE = 8,
-    OBJECT_POWERUP = 16;
+    OBJECT_ENEMY = 2,
+    OBJECT_PLATFORM = 4,
+    OBJECT_POWERUP = 8;
 
 var startGame = function() {
 
@@ -46,13 +45,13 @@ var playGame = function() {
   Game.setBoard(0, board);
 
   var juego = new GameBoard();
-  juego.add(new Frog());
   juego.add(new CocheAmarillo());
   juego.add(new CocheRosa());
   juego.add(new CocheBlanco());
   juego.add(new Tractor());
   juego.add(new Camion());
   juego.add(new Trunk());
+  juego.add(new Frog());
   Game.setBoard(1, juego);
 };
 
@@ -80,7 +79,7 @@ var Background = function() {
 Background.prototype = new Sprite();
 
 var Frog = function() {
-  this.setup('frog', { reloadTime: 0.08, maxVel: 50 });
+  this.setup('frog', { reloadTime: 0.08, vx: 0 });
 
   this.reload = this.reloadTime;
   this.x = Game.width/2 - this.w / 2;
@@ -88,7 +87,17 @@ var Frog = function() {
 
   this.step = function(dt) {
 
+    this.x += this.vx * dt;
+
     this.reload -= dt;
+
+    var collision = this.board.collide(this, OBJECT_PLATFORM);
+    if ( collision ) {
+      this.vx = collision.vx;
+    }
+    else {
+      this.vx = 0;
+    }
 
     if( this.reload <= 0) {
       if (Game.keys['left']) {
@@ -111,7 +120,7 @@ var Frog = function() {
     else if(this.x > Game.width - this.w) { 
       this.x = Game.width - this.w;
     }
-    if(this.y < 0) { this.y = 0; winGame(); }
+    if(this.y <= 30) { this.y = 0; winGame(); }
     else if(this.y > Game.height - this.h) { 
       this.y = Game.height - this.h;
     }
@@ -212,102 +221,28 @@ var Trunk = function() {
   this.step = function(dt) {
     this.x += this.vx * dt;
 
-    var collision = this.board.collide(this,OBJECT_PLAYER);
+    /*var collision = this.board.collide(this,OBJECT_PLAYER);
     if(collision) {
-      collision.x = this.x;
-    }
+      collision.vx = this.vx;
+    }*/
 
     var posicionEntidad = this.x + this.w;
     var posicionEliminacion = Game.width + (this.w * 1.5);
 
-    /*if ( (posicionEntidad < 0) || (posicionEntidad > posicionEliminacion)) {
+    if ( (posicionEntidad < 0) || (posicionEntidad > posicionEliminacion)) {
       this.board.remove(this);
       console.log("entidad eliminada ");
-    }*/
+    }
   };
 };
 Trunk.prototype = new Sprite();
+Trunk.prototype.type = OBJECT_PLATFORM;
 
 var Enemy = function(blueprint,override) {
   this.merge(this.baseParameters);
   this.setup(blueprint.sprite,blueprint);
   this.merge(override);
 };
-
-Enemy.prototype = new Sprite();
-Enemy.prototype.type = OBJECT_ENEMY;
-
-Enemy.prototype.baseParameters = { A: 0, B: 0, C: 0, D: 0, 
-                                   E: 0, F: 0, G: 0, H: 0,
-                                   t: 0, reloadTime: 0.75, 
-                                   reload: 0 };
-
-Enemy.prototype.step = function(dt) {
-  this.t += dt;
-
-  this.vx = this.A + this.B * Math.sin(this.C * this.t + this.D);
-  this.vy = this.E + this.F * Math.sin(this.G * this.t + this.H);
-
-  this.x += this.vx * dt;
-  this.y += this.vy * dt;
-
-  var collision = this.board.collide(this,OBJECT_PLAYER);
-  if(collision) {
-    collision.hit(this.damage);
-    this.board.remove(this);
-  }
-
-  if(Math.random() < 0.01 && this.reload <= 0) {
-    this.reload = this.reloadTime;
-    if(this.missiles == 2) {
-      this.board.add(new EnemyMissile(this.x+this.w-2,this.y+this.h));
-      this.board.add(new EnemyMissile(this.x+2,this.y+this.h));
-    } else {
-      this.board.add(new EnemyMissile(this.x+this.w/2,this.y+this.h));
-    }
-
-  }
-  this.reload-=dt;
-
-  if(this.y > Game.height ||
-     this.x < -this.w ||
-     this.x > Game.width) {
-       this.board.remove(this);
-  }
-};
-
-Enemy.prototype.hit = function(damage) {
-  this.health -= damage;
-  if(this.health <=0) {
-    if(this.board.remove(this)) {
-      Game.points += this.points || 100;
-      this.board.add(new Explosion(this.x + this.w/2, 
-                                   this.y + this.h/2));
-    }
-  }
-};
-
-var EnemyMissile = function(x,y) {
-  this.setup('enemy_missile',{ vy: 200, damage: 10 });
-  this.x = x - this.w/2;
-  this.y = y;
-};
-
-EnemyMissile.prototype = new Sprite();
-EnemyMissile.prototype.type = OBJECT_ENEMY_PROJECTILE;
-
-EnemyMissile.prototype.step = function(dt)  {
-  this.y += this.vy * dt;
-  var collision = this.board.collide(this,OBJECT_PLAYER)
-  if(collision) {
-    collision.hit(this.damage);
-    this.board.remove(this);
-  } else if(this.y > Game.height) {
-      this.board.remove(this); 
-  }
-};
-
-
 
 var Explosion = function(centerX,centerY) {
   this.setup('explosion', { frame: 0 });
