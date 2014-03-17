@@ -6,7 +6,7 @@ var sprites = {
   car3: { sx: 239, sy: 0, w: 96, h: 48, frames: 1 },
   car4: { sx: 335, sy: 0, w: 48, h: 48, frames: 1 },
   car5: { sx: 383, sy: 0, w: 48, h: 48, frames: 1 },
-  trunk: { sx: 287, sy: 383, w: 144, h: 48, frames: 1 },
+  trunk: { sx: 297, sy: 383, w: 125, h: 48, frames: 1 },
   death: { sx: 0, sy: 143, w: 48, h: 48, frames: 4 }
 };
 
@@ -31,9 +31,9 @@ var OBJECT_PLAYER = 1,
 
 var startGame = function() {
 
-  Game.setBoard(3,new TitleScreen("Frogger", "Press spacebar to start playing", playGame));
+  //Game.setBoard(3,new TitleScreen("Frogger", "Press spacebar to start playing", playGame));
 
-  //playGame();
+  playGame();
 };
 
 var playGame = function() {
@@ -120,7 +120,10 @@ var Frog = function() {
     else if(this.x > Game.width - this.w) { 
       this.x = Game.width - this.w;
     }
-    if(this.y <= 30) { this.y = 0; winGame(); }
+    if(this.y <= 30) {
+      this.y = 0;
+      winGame();
+    }
     else if(this.y > Game.height - this.h) { 
       this.y = Game.height - this.h;
     }
