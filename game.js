@@ -27,7 +27,7 @@ var enemies = {
 var OBJECT_PLAYER = 1,
     OBJECT_ENEMY = 2,
     OBJECT_PLATFORM = 4,
-    OBJECT_POWERUP = 8;
+    OBJECT_WATER = 8;
 
 var startGame = function() {
 
@@ -50,7 +50,10 @@ var playGame = function() {
   juego.add(new CocheBlanco());
   juego.add(new Tractor());
   juego.add(new Camion());
-  juego.add(new Trunk());
+  juego.add(new Trunk(48));
+  juego.add(new Trunk(96));
+  juego.add(new Trunk(144));
+  juego.add(new Water());
   juego.add(new Frog());
   Game.setBoard(1, juego);
 };
@@ -70,7 +73,6 @@ var loseGame = function() {
 var Background = function() {
   this.setup('bg');
 
-  this.reload = this.reloadTime;
   this.x = 0;
   this.y = 0;
 
@@ -79,9 +81,11 @@ var Background = function() {
 Background.prototype = new Sprite();
 
 var Frog = function() {
-  this.setup('frog', { reloadTime: 0.08, vx: 0 });
+  this.setup('frog', { vx: 0 });
 
-  this.reload = this.reloadTime;
+  this.keydelay = false;
+  this.tronco = false;
+
   this.x = Game.width/2 - this.w / 2;
   this.y = Game.height - this.h;
 
@@ -89,31 +93,57 @@ var Frog = function() {
 
     this.x += this.vx * dt;
 
-    this.reload -= dt;
-
     var collision = this.board.collide(this, OBJECT_PLATFORM);
     if ( collision ) {
+      this.tronco = true;
       this.vx = collision.vx;
     }
     else {
+      this.tronco = false;
       this.vx = 0;
     }
 
-    if( this.reload <= 0) {
+    if ( !this.keydelay ) {
       if (Game.keys['left']) {
         this.x -= this.w;
+        this.keydelay = true;
+
+        var self = this;
+
+        setTimeout(function() {
+          self.keydelay = false;
+        }, 140);
       }
       else if (Game.keys['right']) {
         this.x += this.w;
+        this.keydelay = true;
+
+        var self = this;
+        
+        setTimeout(function() {
+          self.keydelay = false;
+        }, 140);
       }
       else if (Game.keys['up']) {
         this.y -= this.w;
+        this.keydelay = true;
+
+        var self = this;
+        
+        setTimeout(function() {
+          self.keydelay = false;
+        }, 140);
       }
       else if (Game.keys['down']) {
         this.y += this.w;
-      }
+        this.keydelay = true;
 
-      this.reload = this.reloadTime;
+        var self = this;
+        
+        setTimeout(function() {
+          self.keydelay = false;
+        }, 140);
+      }
     }
 
     if(this.x < 0) { this.x = 0; }
@@ -132,8 +162,11 @@ var Frog = function() {
 Frog.prototype = new Sprite();
 Frog.prototype.type = OBJECT_PLAYER;
 Frog.prototype.hit = function(damage) {
-  if(this.board.remove(this)) {
-    loseGame();
+
+  if(!this.tronco) {
+    if(this.board.remove(this)) {
+      loseGame();
+    }
   }
 };
 
@@ -148,7 +181,7 @@ Coche.prototype.step = function(dt) {
     var collision = this.board.collide(this,OBJECT_PLAYER);
     if(collision) {
       collision.hit(this.damage);
-      this.board.remove(this);
+      //this.board.remove(this);
     }
 
     var posicionEntidad = this.x + this.w;
@@ -215,19 +248,14 @@ var Camion = function() {
 };
 Camion.prototype = new Coche();
 
-var Trunk = function() {
+var Trunk = function(y) {
   this.setup( 'trunk', { vx: -70 });
 
   this.x = Game.width;
-  this.y = 48;
+  this.y = y;
 
   this.step = function(dt) {
     this.x += this.vx * dt;
-
-    /*var collision = this.board.collide(this,OBJECT_PLAYER);
-    if(collision) {
-      collision.vx = this.vx;
-    }*/
 
     var posicionEntidad = this.x + this.w;
     var posicionEliminacion = Game.width + (this.w * 1.5);
@@ -240,6 +268,28 @@ var Trunk = function() {
 };
 Trunk.prototype = new Sprite();
 Trunk.prototype.type = OBJECT_PLATFORM;
+
+var Water = function() {
+
+  this.setup( 'car1', {} );
+
+  this.x = 0;
+  this.y = 48;
+  this.w = Game.width;
+  this.h = 142;
+
+
+  this.draw = function(ctx) { };
+  this.step = function(dt) {
+
+    var collision = this.board.collide(this, OBJECT_PLAYER);
+    if ( collision ) {
+      collision.hit();
+    }
+  };
+};
+Water.prototype = new Sprite();
+Water.prototype.type = OBJECT_WATER;
 
 var Enemy = function(blueprint,override) {
   this.merge(this.baseParameters);
