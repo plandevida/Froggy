@@ -50,9 +50,9 @@ var playGame = function() {
   juego.add(new CocheBlanco());
   juego.add(new Tractor());
   juego.add(new Camion());
-  juego.add(new Trunk(48));
-  juego.add(new Trunk(96));
-  juego.add(new Trunk(144));
+  juego.add(new Trunk(Game.width, 48));
+  juego.add(new Trunk(Game.width+20, 96));
+  juego.add(new Trunk(Game.width+40, 144));
   juego.add(new Water());
   juego.add(new Frog());
   Game.setBoard(1, juego);
@@ -101,6 +101,11 @@ var Frog = function() {
     else {
       this.tronco = false;
       this.vx = 0;
+    }
+
+    var collision = this.board.collide(this, OBJECT_WATER);
+    if ( !this.tronco && collision) {
+      this.hit();
     }
 
     if ( !this.keydelay ) {
@@ -163,10 +168,8 @@ Frog.prototype = new Sprite();
 Frog.prototype.type = OBJECT_PLAYER;
 Frog.prototype.hit = function(damage) {
 
-  if(!this.tronco) {
-    if(this.board.remove(this)) {
-      loseGame();
-    }
+  if(this.board.remove(this)) {
+    loseGame();
   }
 };
 
@@ -181,7 +184,6 @@ Coche.prototype.step = function(dt) {
     var collision = this.board.collide(this,OBJECT_PLAYER);
     if(collision) {
       collision.hit(this.damage);
-      //this.board.remove(this);
     }
 
     var posicionEntidad = this.x + this.w;
@@ -248,10 +250,10 @@ var Camion = function() {
 };
 Camion.prototype = new Coche();
 
-var Trunk = function(y) {
+var Trunk = function(x, y) {
   this.setup( 'trunk', { vx: -70 });
 
-  this.x = Game.width;
+  this.x = x;
   this.y = y;
 
   this.step = function(dt) {
@@ -282,10 +284,12 @@ var Water = function() {
   this.draw = function(ctx) { };
   this.step = function(dt) {
 
+    /*
     var collision = this.board.collide(this, OBJECT_PLAYER);
     if ( collision ) {
       collision.hit();
     }
+    */
   };
 };
 Water.prototype = new Sprite();
