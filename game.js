@@ -7,7 +7,8 @@ var sprites = {
   car4: { sx: 335, sy: 0, w: 48, h: 48, frames: 1 },
   car5: { sx: 383, sy: 0, w: 48, h: 48, frames: 1 },
   trunk: { sx: 297, sy: 383, w: 125, h: 48, frames: 1 },
-  death: { sx: 0, sy: 143, w: 48, h: 48, frames: 4 }
+  death: { sx: 0, sy: 143, w: 48, h: 48, frames: 4 },
+  deathroad: { sx: 0, sy: 191, w: 48, h: 48, frames: 4}
 };
 
 /*
@@ -46,6 +47,7 @@ var playGame = function() {
 
   var juego = new GameBoard();
   juego.add(new CocheAmarillo());
+  juego.add(new Spawner(config));
   juego.add(new CocheRosa());
   juego.add(new CocheBlanco());
   juego.add(new Tractor());
@@ -89,23 +91,33 @@ var Frog = function() {
   this.x = Game.width/2 - this.w / 2;
   this.y = Game.height - this.h;
 
+  this.timeout = function() {
+
+    var self = this;
+    setTimeout(function() {
+      self.keydelay = false;
+    }, 140);
+  };
+
   this.step = function(dt) {
 
     this.x += this.vx * dt;
 
-    var collision = this.board.collide(this, OBJECT_PLATFORM);
-    if ( collision ) {
+    this.collision = this.board.collide(this, OBJECT_PLATFORM);
+    if ( this.collision ) {
       this.tronco = true;
-      this.vx = collision.vx;
+      this.vx = this.collision.vx;
     }
     else {
       this.tronco = false;
       this.vx = 0;
     }
 
-    var collision = this.board.collide(this, OBJECT_WATER);
-    if ( !this.tronco && collision) {
-      this.hit();
+    if ( !this.tronco ) {
+      this.collision = this.board.collide(this, OBJECT_WATER);
+      if ( this.collision) {
+        this.hit();
+      }
     }
 
     if ( !this.keydelay ) {
@@ -113,41 +125,25 @@ var Frog = function() {
         this.x -= this.w;
         this.keydelay = true;
 
-        var self = this;
-
-        setTimeout(function() {
-          self.keydelay = false;
-        }, 140);
+        this.timeout();
       }
       else if (Game.keys['right']) {
         this.x += this.w;
         this.keydelay = true;
 
-        var self = this;
-        
-        setTimeout(function() {
-          self.keydelay = false;
-        }, 140);
+        this.timeout();
       }
       else if (Game.keys['up']) {
         this.y -= this.w;
         this.keydelay = true;
 
-        var self = this;
-        
-        setTimeout(function() {
-          self.keydelay = false;
-        }, 140);
+        this.timeout();
       }
       else if (Game.keys['down']) {
         this.y += this.w;
         this.keydelay = true;
 
-        var self = this;
-        
-        setTimeout(function() {
-          self.keydelay = false;
-        }, 140);
+        this.timeout();
       }
     }
 
@@ -165,11 +161,20 @@ var Frog = function() {
   };
 };
 Frog.prototype = new Sprite();
+Frog.prototype.collision = undefined;
 Frog.prototype.type = OBJECT_PLAYER;
 Frog.prototype.hit = function(damage) {
 
   if(this.board.remove(this)) {
-    loseGame();
+
+    // La rana se ahoga sobre el agua
+    if ( this.collision instanceof Water) {
+      this.board.add(new AhogaRana(this.x + (this.w/2), this.y + (this.h/2)));
+    }
+    // La rana muere si colisona
+    else {
+      this.board.add(new MuerteRana(this.x + (this.w/2), this.y + (this.h/2)));
+    }
   }
 };
 
@@ -198,9 +203,7 @@ Coche.prototype.hit = function(damage) {
   this.health -= damage;
   if(this.health <=0) {
     if(this.board.remove(this)) {
-      Game.points += this.points || 100;
-      this.board.add(new Explosion(this.x + this.w/2, 
-                                   this.y + this.h/2));
+      //this.board.add(new Explosion(this.x + this.w/2, this.y + this.h/2));
     }
   }
 };
@@ -280,44 +283,75 @@ var Water = function() {
   this.w = Game.width;
   this.h = 142;
 
-
   this.draw = function(ctx) { };
-  this.step = function(dt) {
-
-    /*
-    var collision = this.board.collide(this, OBJECT_PLAYER);
-    if ( collision ) {
-      collision.hit();
-    }
-    */
-  };
+  this.step = function(dt) { };
 };
 Water.prototype = new Sprite();
 Water.prototype.type = OBJECT_WATER;
 
-var Enemy = function(blueprint,override) {
-  this.merge(this.baseParameters);
-  this.setup(blueprint.sprite,blueprint);
-  this.merge(override);
-};
+var MuerteRana = function(centerX, centerY) {
+  this.setup('deathroad', { frame: 0 } );
 
-var Explosion = function(centerX,centerY) {
-  this.setup('explosion', { frame: 0 });
   this.x = centerX - this.w/2;
   this.y = centerY - this.h/2;
+
+  this.frameDelay = 8;
+  this.subframe = 0;
+};
+MuerteRana.prototype = new Sprite();
+MuerteRana.prototype.step = function(dt) {
+  this.frame = Math.floor(this.subframe++ / this.frameDelay);
+  if ( this.frame > 4) {
+    if(this.board.remove(this)) {
+      loseGame();
+    }
+  }
+}
+
+var AhogaRana = function(centerX, centerY) {
+  this.setup('death', { frame: 4 } );
+
+  this.x = centerX - this.w/2;
+  this.y = centerY - this.h/2;
+
+  this.frameDelay = 8;
+  this.subframe = 3 * this.frameDelay;
+};
+AhogaRana.prototype = new Sprite();
+AhogaRana.prototype.step = function(dt) {
+  this.frame = Math.floor(this.subframe-- / this.frameDelay);
+  if ( this.frame < 0) {
+    if(this.board.remove(this)) {
+      loseGame();
+    }
+  }
 };
 
-Explosion.prototype = new Sprite();
+var config = {
+  lineaUnoCoches: { vx: -50, freq: 2.5 },
+  lienaDosCoches: { vx: -70, freq: 3.5 }
+};
 
-Explosion.prototype.step = function(dt) {
-  this.frame++;
-  if(this.frame >= 12) {
-    this.board.remove(this);
-  }
+var Spawner = function(config) {
+
+  this.timeAcumulated = 0;
+  this.step = function(dt) {
+
+    this.timeAcumulated += dt;
+
+    if ( this.timeAcumulated >= config.lineaUnoCoches.freq ) {
+      this.board.add( new CocheAmarillo() );
+      this.timeAcumulated = 0;
+    }
+    if ( this.timeAcumulated >= config.lienaDosCoches.freq ) {
+      this.board.add( new CocheRosa() );
+      this.timeAcumulated = 0;
+    }
+  };
+
+  this.draw = function(ctx) {};
 };
 
 window.addEventListener("load", function() {
   Game.initialize("game",sprites,startGame);
 });
-
-
