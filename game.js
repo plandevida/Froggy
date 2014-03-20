@@ -2,13 +2,14 @@ var sprites = {
   frog: { sx: 0, sy: 0, w: 48, h: 48, frames: 1 },
   bg: { sx: 433, sy: 0, w: 320, h: 480, frames: 1 },
   car1: { sx: 143, sy: 0, w: 48, h: 48, frames: 1 },
-  car2: { sx: 192, sy: 0, w: 48, h: 48, frames: 1 },  
+  car2: { sx: 192, sy: 0, w: 48, h: 48, frames: 1 },
   car3: { sx: 239, sy: 0, w: 96, h: 48, frames: 1 },
   car4: { sx: 335, sy: 0, w: 48, h: 48, frames: 1 },
   car5: { sx: 383, sy: 0, w: 48, h: 48, frames: 1 },
   trunk: { sx: 297, sy: 383, w: 125, h: 48, frames: 1 },
   death: { sx: 0, sy: 143, w: 48, h: 48, frames: 4 },
-  deathroad: { sx: 0, sy: 191, w: 48, h: 48, frames: 4}
+  deathroad: { sx: 0, sy: 191, w: 48, h: 48, frames: 4},
+  none: { sx: 144, sy: 96, w: 48, h: 48, frames: 1}
 };
 
 /*
@@ -25,6 +26,10 @@ var enemies = {
 };
 */
 
+var config = {
+  lineaUnoCoches: { vx: new Number(-50), x: new Number(320), y: new Number(384), sprite: new String('car1'), freq: new Number(2.5) }
+};
+
 var OBJECT_PLAYER = 1,
     OBJECT_ENEMY = 2,
     OBJECT_PLATFORM = 4,
@@ -34,9 +39,7 @@ var gameStoped = false;
 
 var startGame = function() {
 
-  Game.setBoard(3,new TitleScreen("Frogger", "Press spacebar to start playing", playGame));
-
-  //playGame();
+  Game.setBoard(3,new TitleScreen("Frogger", "Press spacebar to start playing", true, playGame));
 };
 
 var playGame = function() {
@@ -50,12 +53,7 @@ var playGame = function() {
   Game.setBoard(0, board);
 
   var juego = new GameBoard();
-  juego.add(new CocheAmarillo());
-  juego.add(new Spawner(config));
-  juego.add(new CocheRosa());
-  juego.add(new CocheBlanco());
-  juego.add(new Tractor());
-  juego.add(new Camion());
+  juego.add(new Spawner(config.lineaUnoCoches, new Coche()));
   juego.add(new Trunk(Game.width, 48));
   juego.add(new Trunk(Game.width+20, 96));
   juego.add(new Trunk(Game.width+40, 144));
@@ -68,6 +66,7 @@ var winGame = function() {
   gameStoped = true;
   Game.setBoard(3,new TitleScreen("You win!", 
                                   "Press spacebar to play again",
+                                  false,
                                   playGame));
 };
 
@@ -75,6 +74,7 @@ var loseGame = function() {
   gameStoped = true;
   Game.setBoard(3,new TitleScreen("You lose!", 
                                   "Press spacebar to play again",
+                                  false,
                                   playGame));
 };
 
@@ -186,9 +186,16 @@ Frog.prototype.hit = function(damage) {
   }
 };
 
-var Coche = function() {
-  this.x = 0;
-  this.y = 0;
+//var Coche = function(sprite, velocidad, posx, posy) {
+  var Coche = function(props) {
+  
+  this.setup(props.sprite, props);
+  
+  /*
+  this.merge( { sprite:'none', vx:0, x:0, y:0, w:48, h:48 } );
+  this.setup(blueprints.sprite, blueprints);
+  this.merge(override);
+  */
 };
 Coche.prototype = new Sprite();
 Coche.prototype.step = function(dt) {
@@ -204,7 +211,7 @@ Coche.prototype.step = function(dt) {
 
     if ( (posicionEntidad < 0) || (posicionEntidad > posicionEliminacion)) {
       this.board.remove(this);
-      console.log("entidad eliminada ");
+      //console.log("entidad eliminada ");
     }
 };
 Coche.prototype.hit = function(damage) {
@@ -216,6 +223,7 @@ Coche.prototype.hit = function(damage) {
   }
 };
 
+/*
 var CocheAmarillo = function() {
   this.setup('car1', { vx: -50 });
 
@@ -243,6 +251,7 @@ var CocheBlanco = function() {
 };
 CocheBlanco.prototype = new Coche();
 
+
 var Tractor = function() {
   this.setup('car2', { vx: 30 });
 
@@ -260,7 +269,7 @@ var Camion = function() {
 
 };
 Camion.prototype = new Coche();
-
+*/
 var Trunk = function(x, y) {
   this.setup( 'trunk', { vx: -70 });
 
@@ -284,7 +293,7 @@ Trunk.prototype.type = OBJECT_PLATFORM;
 
 var Water = function() {
 
-  this.setup( 'car1', {} );
+  this.setup( 'none', {} );
 
   this.x = 0;
   this.y = 48;
@@ -335,20 +344,16 @@ AhogaRana.prototype.step = function(dt) {
   }
 };
 
-var config = {
-  lineaUnoCoches: { vx: -50, freq: 2.5 }
-};
-
 var Spawner = function(config, obj) {
 
-  this.timeAcumulated = 0;
+  this.timeAcumulated = config.freq;
 
   this.step = function(dt) {
 
     this.timeAcumulated += dt;
 
-    if ( this.timeAcumulated >= config.lineaUnoCoches.freq ) {
-      this.board.add( Object.create(obj) );
+    if ( this.timeAcumulated >= config.freq ) {
+      this.board.add( Object.create(obj, config) );
       this.timeAcumulated = 0;
     }
   };

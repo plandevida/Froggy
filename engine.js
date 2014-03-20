@@ -84,7 +84,7 @@ var Game = new function() {
     if(dt > maxTime) { dt = maxTime; }
 
     for(var i=0,len = boards.length;i<len;i++) {
-      if(boards[i]) { 
+      if(boards[i]) {
         boards[i].step(dt);
         boards[i].draw(Game.ctx);
       }
@@ -134,7 +134,6 @@ var Game = new function() {
     this.canvas.style.top="0px";
 
   };
-
 };
 
 
@@ -162,7 +161,7 @@ var SpriteSheet = new function() {
   return this;
 };
 
-var TitleScreen = function TitleScreen(title,subtitle,callback) {
+var TitleScreen = function TitleScreen(title,subtitle,black,callback) {
   var up = false;
   this.step = function(dt) {
     if(!Game.keys['spacebar']) up = true;
@@ -170,6 +169,12 @@ var TitleScreen = function TitleScreen(title,subtitle,callback) {
   };
 
   this.draw = function(ctx) {
+
+    if ( black) {
+      ctx.fillStyle = "#000000";
+      ctx.fillRect(0, 0, 320, 480);
+    }
+
     ctx.fillStyle = "#FFFFFF";
 
     ctx.font = "bold 40px bangers";
@@ -250,8 +255,6 @@ var GameBoard = function() {
 
   // Draw all the objects
   this.draw = function(ctx) {
-    ctx.fillStyle('white');
-    ctx.fillRect(0, 0, 320, 480);
     this.iterate('draw',ctx);
   };
 
@@ -272,8 +275,6 @@ var GameBoard = function() {
       }
     });
   };
-
-
 };
 
 var Sprite = function() { };
