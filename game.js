@@ -30,16 +30,20 @@ var OBJECT_PLAYER = 1,
     OBJECT_PLATFORM = 4,
     OBJECT_WATER = 8;
 
+var gameStoped = false;
+
 var startGame = function() {
 
-  //Game.setBoard(3,new TitleScreen("Frogger", "Press spacebar to start playing", playGame));
+  Game.setBoard(3,new TitleScreen("Frogger", "Press spacebar to start playing", playGame));
 
-  playGame();
+  //playGame();
 };
 
 var playGame = function() {
 
   Game.setBoard(3, undefined);
+
+  gameStoped = false;
 
   var board = new GameBoard();
   board.add(new Background());
@@ -61,12 +65,14 @@ var playGame = function() {
 };
 
 var winGame = function() {
+  gameStoped = true;
   Game.setBoard(3,new TitleScreen("You win!", 
                                   "Press spacebar to play again",
                                   playGame));
 };
 
 var loseGame = function() {
+  gameStoped = true;
   Game.setBoard(3,new TitleScreen("You lose!", 
                                   "Press spacebar to play again",
                                   playGame));
@@ -101,62 +107,64 @@ var Frog = function() {
 
   this.step = function(dt) {
 
-    this.x += this.vx * dt;
+    if ( !gameStoped ) {
+      this.x += this.vx * dt;
 
-    this.collision = this.board.collide(this, OBJECT_PLATFORM);
-    if ( this.collision ) {
-      this.tronco = true;
-      this.vx = this.collision.vx;
-    }
-    else {
-      this.tronco = false;
-      this.vx = 0;
-    }
-
-    if ( !this.tronco ) {
-      this.collision = this.board.collide(this, OBJECT_WATER);
-      if ( this.collision) {
-        this.hit();
+      this.collision = this.board.collide(this, OBJECT_PLATFORM);
+      if ( this.collision ) {
+        this.tronco = true;
+        this.vx = this.collision.vx;
       }
-    }
-
-    if ( !this.keydelay ) {
-      if (Game.keys['left']) {
-        this.x -= this.w;
-        this.keydelay = true;
-
-        this.timeout();
+      else {
+        this.tronco = false;
+        this.vx = 0;
       }
-      else if (Game.keys['right']) {
-        this.x += this.w;
-        this.keydelay = true;
 
-        this.timeout();
+      if ( !this.tronco ) {
+        this.collision = this.board.collide(this, OBJECT_WATER);
+        if ( this.collision) {
+          this.hit();
+        }
       }
-      else if (Game.keys['up']) {
-        this.y -= this.w;
-        this.keydelay = true;
 
-        this.timeout();
+      if ( !this.keydelay ) {
+        if (Game.keys['left']) {
+          this.x -= this.w;
+          this.keydelay = true;
+
+          this.timeout();
+        }
+        else if (Game.keys['right']) {
+          this.x += this.w;
+          this.keydelay = true;
+
+          this.timeout();
+        }
+        else if (Game.keys['up']) {
+          this.y -= this.w;
+          this.keydelay = true;
+
+          this.timeout();
+        }
+        else if (Game.keys['down']) {
+          this.y += this.w;
+          this.keydelay = true;
+
+          this.timeout();
+        }
       }
-      else if (Game.keys['down']) {
-        this.y += this.w;
-        this.keydelay = true;
 
-        this.timeout();
+      if(this.x < 0) { this.x = 0; }
+      else if(this.x > Game.width - this.w) { 
+        this.x = Game.width - this.w;
       }
-    }
-
-    if(this.x < 0) { this.x = 0; }
-    else if(this.x > Game.width - this.w) { 
-      this.x = Game.width - this.w;
-    }
-    if(this.y <= 30) {
-      this.y = 0;
-      winGame();
-    }
-    else if(this.y > Game.height - this.h) { 
-      this.y = Game.height - this.h;
+      if(this.y <= 30) {
+        this.y = 0;
+        winGame();
+      }
+      else if(this.y > Game.height - this.h) { 
+        this.y = Game.height - this.h;
+      }
     }
   };
 };
@@ -328,23 +336,19 @@ AhogaRana.prototype.step = function(dt) {
 };
 
 var config = {
-  lineaUnoCoches: { vx: -50, freq: 2.5 },
-  lienaDosCoches: { vx: -70, freq: 3.5 }
+  lineaUnoCoches: { vx: -50, freq: 2.5 }
 };
 
-var Spawner = function(config) {
+var Spawner = function(config, obj) {
 
   this.timeAcumulated = 0;
+
   this.step = function(dt) {
 
     this.timeAcumulated += dt;
 
     if ( this.timeAcumulated >= config.lineaUnoCoches.freq ) {
-      this.board.add( new CocheAmarillo() );
-      this.timeAcumulated = 0;
-    }
-    if ( this.timeAcumulated >= config.lienaDosCoches.freq ) {
-      this.board.add( new CocheRosa() );
+      this.board.add( Object.create(obj) );
       this.timeAcumulated = 0;
     }
   };

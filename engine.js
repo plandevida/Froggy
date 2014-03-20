@@ -250,6 +250,8 @@ var GameBoard = function() {
 
   // Draw all the objects
   this.draw = function(ctx) {
+    ctx.fillStyle('white');
+    ctx.fillRect(0, 0, 320, 480);
     this.iterate('draw',ctx);
   };
 
