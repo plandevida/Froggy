@@ -86,7 +86,12 @@ var Game = new function() {
     for(var i=0,len = boards.length;i<len;i++) {
       if(boards[i]) {
         boards[i].step(dt);
-        boards[i].draw(Game.ctx);
+        try {
+          boards[i].draw(Game.ctx);
+        }
+        catch (err) {
+          console.log(boards[i] + " no tiene draw");
+        }
       }
     }
     lastTime = curTime;
@@ -212,6 +217,10 @@ var GameBoard = function() {
     } else {
       return false;
     }
+  };
+
+  this.swap = function() {
+    var rana 
   };
 
   // Reset the list of removed objects

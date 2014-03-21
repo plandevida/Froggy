@@ -12,22 +12,14 @@ var sprites = {
   none: { sx: 144, sy: 96, w: 48, h: 48, frames: 1}
 };
 
-/*
-var enemies = {
-  cocheAmarillo: { x: 368,   y: 400, sprite: 'car1', A: -100 },
-  cocheRosa:     { x: 0,   y: 350, sprite: 'car4', A: -100 },
-  cocheBlanco:   { x: 250, y: 300, sprite: 'car5', A: -100 },
-  tractor:       { x: 100, y: -50, sprite: 'car2', health: 20, 
-                  B: 50, C: 4, E: 100, firePercentage: 0.001, missiles: 2 },
-  camion:        { x: 0,   y: -50, sprite: 'car3', health: 10,
-                  B: 150, C: 1.2, E: 75 },
-  tronco         { x: 0,   y: -50, sprite: 'trunk', health: 10,
-                  B: 150, C: 1.2, E: 75 },
-};
-*/
-
 var config = {
-  lineaUnoCoches: { vx: new Number(-50), x: new Number(320), y: new Number(384), sprite: new String('car1'), freq: new Number(2.5) }
+  lineaUnoCarretera: { vx: -70, x: 320, y: 384, freq: 3.3 },
+  lineaDosCarretera: { vx: -90, x: 320, y: 336, freq: 3 },
+  lineaTresCarretera: { vx: 60, x: 0, y: 288, freq: 3.7 },
+  lineaCuatroCarretera: { vx: -80, x: 320, y: 240, freq: 4 },
+  lineaUnoAgua: { vx: -70, x: 320, y: 144, freq: 4 },
+  lineaDosAgua: { vx: 50, x: 0, y: 96, freq: 6 },
+  lineaTresAgua: { vx: -80, x: 320, y: 48, freq: 3.5}
 };
 
 var OBJECT_PLAYER = 1,
@@ -53,10 +45,13 @@ var playGame = function() {
   Game.setBoard(0, board);
 
   var juego = new GameBoard();
-  juego.add(new Spawner(config.lineaUnoCoches, new Coche()));
-  juego.add(new Trunk(Game.width, 48));
-  juego.add(new Trunk(Game.width+20, 96));
-  juego.add(new Trunk(Game.width+40, 144));
+  juego.add(new Spawner(config.lineaUnoCarretera, new Coche('car1')));
+  juego.add(new Spawner(config.lineaDosCarretera, new Coche('car4')));
+  juego.add(new Spawner(config.lineaTresCarretera, new Coche('car5'), new Coche('car2')));
+  juego.add(new Spawner(config.lineaCuatroCarretera, new Coche('car3')));
+  juego.add(new Spawner(config.lineaUnoAgua, new Trunk()));
+  juego.add(new Spawner(config.lineaDosAgua, new Trunk(-125)));
+  juego.add(new Spawner(config.lineaTresAgua, new Trunk()));
   juego.add(new Water());
   juego.add(new Frog());
   Game.setBoard(1, juego);
@@ -186,16 +181,10 @@ Frog.prototype.hit = function(damage) {
   }
 };
 
-//var Coche = function(sprite, velocidad, posx, posy) {
-  var Coche = function(props) {
-  
-  this.setup(props.sprite, props);
-  
-  /*
-  this.merge( { sprite:'none', vx:0, x:0, y:0, w:48, h:48 } );
-  this.setup(blueprints.sprite, blueprints);
-  this.merge(override);
-  */
+var Coche = function(image) {
+
+  this.setup(image);
+
 };
 Coche.prototype = new Sprite();
 Coche.prototype.step = function(dt) {
@@ -211,7 +200,6 @@ Coche.prototype.step = function(dt) {
 
     if ( (posicionEntidad < 0) || (posicionEntidad > posicionEliminacion)) {
       this.board.remove(this);
-      //console.log("entidad eliminada ");
     }
 };
 Coche.prototype.hit = function(damage) {
@@ -223,55 +211,8 @@ Coche.prototype.hit = function(damage) {
   }
 };
 
-/*
-var CocheAmarillo = function() {
-  this.setup('car1', { vx: -50 });
-
-  this.x = Game.width;
-  this.y = 384;
-
-};
-CocheAmarillo.prototype = new Coche();
-
-var CocheRosa = function() {
-  this.setup('car4', { vx: -80 });
-
-  this.x = Game.width;
-  this.y = 336;
-
-};
-CocheRosa.prototype = new Coche();
-
-var CocheBlanco = function() {
-  this.setup('car5', { vx: 60 });
-
-  this.x = -this.w;
-  this.y = 288;
-
-};
-CocheBlanco.prototype = new Coche();
-
-
-var Tractor = function() {
-  this.setup('car2', { vx: 30 });
-
-  this.x = -this.w;
-  this.y = 240;
-
-};
-Tractor.prototype = new Coche();
-
-var Camion = function() {
-  this.setup('car3', { vx: -40 });
-
-  this.x = Game.width;
-  this.y = 336;
-
-};
-Camion.prototype = new Coche();
-*/
 var Trunk = function(x, y) {
-  this.setup( 'trunk', { vx: -70 });
+  this.setup( 'trunk' );
 
   this.x = x;
   this.y = y;
@@ -284,7 +225,6 @@ var Trunk = function(x, y) {
 
     if ( (posicionEntidad < 0) || (posicionEntidad > posicionEliminacion)) {
       this.board.remove(this);
-      console.log("entidad eliminada ");
     }
   };
 };
@@ -347,14 +287,52 @@ AhogaRana.prototype.step = function(dt) {
 var Spawner = function(config, obj) {
 
   this.timeAcumulated = config.freq;
+  this.configuracion = config;
+  this.elementos = new Array();
+  this.numElems = arguments.length-1;
+  this.elementoAsalir = 0;
+
+  for ( var i in arguments) {
+
+    var elem = arguments[i];
+
+    // Solo metemos en el board los objetos
+    // que se pintan en el juego.
+    if ( elem instanceof Sprite ) {
+
+      // Configuramos el elemento que se va a poner el en 
+      // board con la propiedades que le corresponden
+      if(this.configuracion) {
+        for (var prop in this.configuracion) {
+
+          if ( !elem[prop] ) {
+            elem[prop] = this.configuracion[prop];
+          }
+        }
+      }
+      this.elementos.push(elem);
+    }
+  }
 
   this.step = function(dt) {
 
     this.timeAcumulated += dt;
 
     if ( this.timeAcumulated >= config.freq ) {
-      this.board.add( Object.create(obj, config) );
+
+      var objeto = this.elementos[this.elementoAsalir];
+
+      console.log("objeto chungo: " + objeto);
+      console.log("en indice: " + this.elementoAsalir);
+
+      this.board.add( Object.create( objeto ) );
       this.timeAcumulated = 0;
+      if ( this.elementoAsalir < this.numElems-1 ) {
+        this.elementoAsalir++;
+      }
+      else {
+        this.elementoAsalir = 0;
+      }
     }
   };
 
