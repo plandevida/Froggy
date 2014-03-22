@@ -8,8 +8,8 @@ var sprites = {
   car5: { sx: 383, sy: 0, w: 48, h: 48, frames: 1 },
   trunk: { sx: 297, sy: 383, w: 125, h: 48, frames: 1 },
   death: { sx: 0, sy: 143, w: 48, h: 48, frames: 4 },
-  deathroad: { sx: 0, sy: 191, w: 48, h: 48, frames: 4},
-  tortuga: { sx: 0, sy: 239, w: 48, h: 48, frames: 5},
+  deathroad: { sx: 0, sy: 191, w: 48, h: 48, frames: 5},
+  tortuga: { sx: 0, sy: 243, w: 48, h: 45, frames: 4},
   none: { sx: 144, sy: 96, w: 48, h: 48, frames: 1}
 };
 
@@ -18,9 +18,9 @@ var config = {
   lineaDosCarretera: { vx: -90, x: 320, y: 336, freq: 3 },
   lineaTresCarretera: { vx: 60, x: 0, y: 288, freq: 3.7 },
   lineaCuatroCarretera: { vx: -80, x: 320, y: 240, freq: 4 },
-  lineaUnoAgua: { vx: -70, x: 320, y: 144, freq: 4 },
-  lineaDosAgua: { vx: 50, x: 0, y: 96, freq: 6 },
-  lineaTresAgua: { vx: -80, x: 320, y: 48, freq: 3.5}
+  lineaUnoAgua: { vx: -70, x: 320, y: 144, freq: 3.5 },
+  lineaDosAgua: { vx: -50, x: 320, y: 96, freq: 4 },
+  lineaTresAgua: { vx: 80, x: 0, y: 48, freq: 3.5}
 };
 
 var OBJECT_PLAYER = 1,
@@ -51,8 +51,8 @@ var playGame = function() {
   juego.add(new Spawner(config.lineaTresCarretera, new Coche('car5'), new Coche('car2')));
   juego.add(new Spawner(config.lineaCuatroCarretera, new Coche('car3')));
   juego.add(new Spawner(config.lineaUnoAgua, new Trunk()));
-  juego.add(new Spawner(config.lineaDosAgua, new Trunk(-125)));
-  juego.add(new Spawner(config.lineaTresAgua, new Trunk()));
+  juego.add(new Spawner(config.lineaDosAgua, new Trunk(), new Tortugas()));
+  juego.add(new Spawner(config.lineaTresAgua, new Trunk(-125)));
   juego.add(new Water());
   juego.add(new Frog());
   Game.setBoard(1, juego);
@@ -110,6 +110,7 @@ var Frog = function() {
       if ( this.collision ) {
         this.tronco = true;
         this.vx = this.collision.vx;
+        console.log("Sobre 'tronco'...");
       }
       else {
         this.tronco = false;
@@ -120,6 +121,8 @@ var Frog = function() {
         this.collision = this.board.collide(this, OBJECT_WATER);
         if ( this.collision) {
           this.hit();
+
+        console.log("En el agua...");
         }
       }
 
@@ -224,14 +227,45 @@ var Trunk = function(x, y) {
 Trunk.prototype = new Sprite();
 Trunk.prototype.type = OBJECT_PLATFORM;
 
-var Tortuga = function() {
-  this.setup('tortuga');
+var Tortugas = function() {
+  this.setup('tortuga', { frame: 0 });
 
-  this.step = function() {
+  this.w *= 3;
 
+  this.frameDelay = 20;
+  this.subframe = 0;
+
+  this.step = function(dt) {
+
+    this.x += this.vx * dt;
+    
+    this.frame = Math.floor(this.subframe++ / this.frameDelay);
+    if ( this.frame > 2 ) {
+      this.type = OBJECT_WATER;
+    }
+    if ( this.frame > 5 ) {
+      this.type = OBJECT_PLATFORM;
+      this.frame = 0;
+      this.subframe = 0;
+    }
+
+    var posicionEntidad = this.x + this.w;
+    var posicionEliminacion = Game.width + (this.w * 1.5);
+
+    if ( (posicionEntidad < 0) || (posicionEntidad > posicionEliminacion)) {
+      this.board.remove(this);
+    }
+  };
+
+  this.draw = function(ctx) {
+    // Pintamos tres tortugas seguidas
+    SpriteSheet.draw(ctx,this.sprite,this.x,this.y,this.frame);
+    SpriteSheet.draw(ctx,this.sprite,this.x+48,this.y,this.frame);
+    SpriteSheet.draw(ctx,this.sprite,this.x+48+48,this.y,this.frame);
   };
 };
-Tortuga.prototype = new Sprite();
+Tortugas.prototype = new Sprite();
+Tortugas.prototype.type = OBJECT_PLATFORM;
 
 var Water = function() {
 
