@@ -193,8 +193,9 @@ var TitleScreen = function TitleScreen(title,subtitle,black,callback) {
 };
 
 
-var GameBoard = function() {
+var GameBoard = function(tipoObjAlFinal) {
   var board = this;
+  this.tipoObjFinal = tipoObjAlFinal;
 
   // The current list of objects
   this.objects = [];
@@ -202,25 +203,36 @@ var GameBoard = function() {
 
   // Add a new object to the object list
   this.add = function(obj) { 
-    obj.board=this; 
-    this.objects.push(obj); 
+    obj.board=this;
+    //this.objects.push(obj);
+    this.swap(obj);
     this.cnt[obj.type] = (this.cnt[obj.type] || 0) + 1;
     return obj; 
   };
 
   // Mark an object for removal
-  this.remove = function(obj) { 
+  this.remove = function(obj) {
     var idx = this.removed.indexOf(obj);
     if(idx == -1) {
-      this.removed.push(obj); 
+      this.removed.push(obj);
       return true;
     } else {
       return false;
     }
   };
 
-  this.swap = function() {
-    var rana 
+  this.swap = function(obj) {
+
+    if ( obj.type === this.tipoObjFinal ) {
+      this.objects.push(obj);
+    }
+    else {
+      var rana = this.objects.pop();  
+      this.objects.push(obj);
+      if ( rana ) {
+        this.objects.push(rana);
+      }
+    }
   };
 
   // Reset the list of removed objects

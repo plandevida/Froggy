@@ -9,6 +9,7 @@ var sprites = {
   trunk: { sx: 297, sy: 383, w: 125, h: 48, frames: 1 },
   death: { sx: 0, sy: 143, w: 48, h: 48, frames: 4 },
   deathroad: { sx: 0, sy: 191, w: 48, h: 48, frames: 4},
+  tortuga: { sx: 0, sy: 239, w: 48, h: 48, frames: 5},
   none: { sx: 144, sy: 96, w: 48, h: 48, frames: 1}
 };
 
@@ -44,7 +45,7 @@ var playGame = function() {
   board.add(new Background());
   Game.setBoard(0, board);
 
-  var juego = new GameBoard();
+  var juego = new GameBoard(OBJECT_PLAYER);
   juego.add(new Spawner(config.lineaUnoCarretera, new Coche('car1')));
   juego.add(new Spawner(config.lineaDosCarretera, new Coche('car4')));
   juego.add(new Spawner(config.lineaTresCarretera, new Coche('car5'), new Coche('car2')));
@@ -202,14 +203,6 @@ Coche.prototype.step = function(dt) {
       this.board.remove(this);
     }
 };
-Coche.prototype.hit = function(damage) {
-  this.health -= damage;
-  if(this.health <=0) {
-    if(this.board.remove(this)) {
-      //this.board.add(new Explosion(this.x + this.w/2, this.y + this.h/2));
-    }
-  }
-};
 
 var Trunk = function(x, y) {
   this.setup( 'trunk' );
@@ -230,6 +223,15 @@ var Trunk = function(x, y) {
 };
 Trunk.prototype = new Sprite();
 Trunk.prototype.type = OBJECT_PLATFORM;
+
+var Tortuga = function() {
+  this.setup('tortuga');
+
+  this.step = function() {
+
+  };
+};
+Tortuga.prototype = new Sprite();
 
 var Water = function() {
 
@@ -286,10 +288,21 @@ AhogaRana.prototype.step = function(dt) {
 
 var Spawner = function(config, obj) {
 
+  // tiempo que trascurre desde que se crea un objeto
+  // hasta que se vuelve a crear el siguiente
   this.timeAcumulated = config.freq;
+
+  // configuración de los objetos que se van a crear
   this.configuracion = config;
+
+  // lista de elementos para esta configuración
   this.elementos = new Array();
+
+  // el número de elementos de la lista
   this.numElems = arguments.length-1;
+
+  // el indice de elemento que se va a crear
+  // cada vez
   this.elementoAsalir = 0;
 
   for ( var i in arguments) {
@@ -320,13 +333,17 @@ var Spawner = function(config, obj) {
 
     if ( this.timeAcumulated >= config.freq ) {
 
+      // de la lista de objetos que se ejecutan en
+      // esta posición y configuración obtenemos al que
+      // le toca aparecer
       var objeto = this.elementos[this.elementoAsalir];
 
-      console.log("objeto chungo: " + objeto);
-      console.log("en indice: " + this.elementoAsalir);
-
+      // se crea el objeto y se inserta en el gameboard
       this.board.add( Object.create( objeto ) );
       this.timeAcumulated = 0;
+
+      // si se han creado ya todos los elementos
+      // de esa posición, se vuelve a empezar la lista
       if ( this.elementoAsalir < this.numElems-1 ) {
         this.elementoAsalir++;
       }
@@ -336,7 +353,9 @@ var Spawner = function(config, obj) {
     }
   };
 
-  this.draw = function(ctx) {};
+  this.draw = function(ctx) {
+    // no hace nada
+  };
 };
 
 window.addEventListener("load", function() {
