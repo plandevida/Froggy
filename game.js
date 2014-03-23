@@ -23,7 +23,7 @@ var config = {
   lineaDosAgua: { vx: -50, x: 320, y: 96, freq: 4 },
   lineaTresAgua: { vx: 80, x: 0, y: 48, freq: 3.5 },
   lineaMedia: { vx: -60, x: 320, y: 194, freq: 9 },
-  lineaBase: { vx: -40, x: 320, y: 435, freq: 12 }
+  lineaBase: { vx: -40, x: 320, y: 435, freq: 18 }
 };
 
 var OBJECT_PLAYER = 1,
