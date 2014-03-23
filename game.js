@@ -8,9 +8,10 @@ var sprites = {
   car5: { sx: 383, sy: 0, w: 48, h: 48, frames: 1 },
   trunk: { sx: 297, sy: 383, w: 125, h: 48, frames: 1 },
   death: { sx: 0, sy: 143, w: 48, h: 48, frames: 4 },
-  deathroad: { sx: 0, sy: 191, w: 48, h: 48, frames: 5},
-  tortuga: { sx: 0, sy: 243, w: 48, h: 45, frames: 4},
-  none: { sx: 144, sy: 96, w: 48, h: 48, frames: 1}
+  deathroad: { sx: 0, sy: 191, w: 48, h: 48, frames: 5 },
+  tortuga: { sx: 0, sy: 243, w: 48, h: 45, frames: 4 },
+  snake: { sx: 0, sy: 385, w: 96, h: 45, frames: 3 },
+  none: { sx: 144, sy: 96, w: 48, h: 48, frames: 1 }
 };
 
 var config = {
@@ -20,7 +21,9 @@ var config = {
   lineaCuatroCarretera: { vx: -80, x: 320, y: 240, freq: 4 },
   lineaUnoAgua: { vx: -70, x: 320, y: 144, freq: 3.5 },
   lineaDosAgua: { vx: -50, x: 320, y: 96, freq: 4 },
-  lineaTresAgua: { vx: 80, x: 0, y: 48, freq: 3.5}
+  lineaTresAgua: { vx: 80, x: 0, y: 48, freq: 3.5 },
+  lineaMedia: { vx: -60, x: 320, y: 194, freq: 9 },
+  lineaBase: { vx: -40, x: 320, y: 435, freq: 12 }
 };
 
 var OBJECT_PLAYER = 1,
@@ -46,13 +49,15 @@ var playGame = function() {
   Game.setBoard(0, board);
 
   var juego = new GameBoard(OBJECT_PLAYER);
-  juego.add(new Spawner(config.lineaUnoCarretera, new Coche('car1')));
-  juego.add(new Spawner(config.lineaDosCarretera, new Coche('car4')));
-  juego.add(new Spawner(config.lineaTresCarretera, new Coche('car5'), new Coche('car2')));
-  juego.add(new Spawner(config.lineaCuatroCarretera, new Coche('car3')));
-  juego.add(new Spawner(config.lineaUnoAgua, new Trunk()));
-  juego.add(new Spawner(config.lineaDosAgua, new Trunk(), new Tortugas()));
-  juego.add(new Spawner(config.lineaTresAgua, new Trunk(-125)));
+  juego.add(new Spawner(config.lineaUnoCarretera, [ new Coche('car1') ] ));
+  juego.add(new Spawner(config.lineaDosCarretera, [ new Coche('car4') ] ));
+  juego.add(new Spawner(config.lineaTresCarretera, [ new Coche('car5'), new Coche('car2') ] ));
+  juego.add(new Spawner(config.lineaCuatroCarretera, [ new Coche('car3') ] ));
+  juego.add(new Spawner(config.lineaUnoAgua, [ new Trunk() ] ));
+  juego.add(new Spawner(config.lineaDosAgua, [ new Trunk(), new Tortugas() ] ));
+  juego.add(new Spawner(config.lineaTresAgua, [ new Trunk(-125) ] ));
+  juego.add(new Spawner(config.lineaMedia, [ new Snake() ] ));
+  juego.add(new Spawner(config.lineaBase, [ new Snake() ] , 0));
   juego.add(new Water());
   juego.add(new Frog());
   Game.setBoard(1, juego);
@@ -110,7 +115,6 @@ var Frog = function() {
       if ( this.collision ) {
         this.tronco = true;
         this.vx = this.collision.vx;
-        console.log("Sobre 'tronco'...");
       }
       else {
         this.tronco = false;
@@ -121,8 +125,6 @@ var Frog = function() {
         this.collision = this.board.collide(this, OBJECT_WATER);
         if ( this.collision) {
           this.hit();
-
-        console.log("En el agua...");
         }
       }
 
@@ -191,6 +193,7 @@ var Coche = function(image) {
 
 };
 Coche.prototype = new Sprite();
+Coche.prototype.type = OBJECT_ENEMY;
 Coche.prototype.step = function(dt) {
     this.x += this.vx * dt;
 
@@ -267,6 +270,37 @@ var Tortugas = function() {
 Tortugas.prototype = new Sprite();
 Tortugas.prototype.type = OBJECT_PLATFORM;
 
+var Snake = function() {
+
+  this.setup('snake', { frame: 0 });
+
+  this.frameDelay = 20;
+  this.subframe = 0;
+};
+Snake.prototype = new Sprite();
+Snake.prototype.type = OBJECT_ENEMY;
+Snake.prototype.step = function(dt) {
+  this.x += this.vx * dt;
+
+  var collision = this.board.collide(this, OBJECT_PLAYER);
+  if (collision) {
+    collision.hit(this.damage);
+  }
+
+  this.frame = Math.floor(this.subframe++ / this.frameDelay);
+  if ( this.frame > 2 ) {
+    this.frame = 0;
+    this.subframe = 0;
+  }
+
+  var posicionEntidad = this.x + this.w;
+  var posicionEliminacion = Game.width + (this.w * 1.5);
+
+  if ( (posicionEntidad < 0) || (posicionEntidad > posicionEliminacion)) {
+    this.board.remove(this);
+  }
+};
+
 var Water = function() {
 
   this.setup( 'none', {} );
@@ -320,11 +354,16 @@ AhogaRana.prototype.step = function(dt) {
   }
 };
 
-var Spawner = function(config, obj) {
+var Spawner = function(config, objs, startFreq) {
 
   // tiempo que trascurre desde que se crea un objeto
   // hasta que se vuelve a crear el siguiente
-  this.timeAcumulated = config.freq;
+  if ( startFreq != undefined ) {
+    this.timeAcumulated = startFreq;
+  }
+  else {
+    this.timeAcumulated = config.freq;
+  }
 
   // configuración de los objetos que se van a crear
   this.configuracion = config;
@@ -333,15 +372,15 @@ var Spawner = function(config, obj) {
   this.elementos = new Array();
 
   // el número de elementos de la lista
-  this.numElems = arguments.length-1;
+  this.numElems = objs.length;
 
   // el indice de elemento que se va a crear
   // cada vez
   this.elementoAsalir = 0;
 
-  for ( var i in arguments) {
+  for ( var i in objs) {
 
-    var elem = arguments[i];
+    var elem = objs[i];
 
     // Solo metemos en el board los objetos
     // que se pintan en el juego.
